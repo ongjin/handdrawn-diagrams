@@ -36,7 +36,7 @@ ln -s "$PWD/handdrawn-diagrams/skills/handdrawn-diagrams" ~/.claude/skills/handd
 ### Codex
 
 ```bash
-ln -s "$PWD/handdrawn-diagrams/skills/handdrawn-diagrams" ~/.agents/skills/handdrawn-diagrams
+ln -s "$PWD/handdrawn-diagrams/skills/handdrawn-diagrams" ~/.codex/skills/handdrawn-diagrams
 ```
 
 ### Others (Gemini CLI, etc.)
