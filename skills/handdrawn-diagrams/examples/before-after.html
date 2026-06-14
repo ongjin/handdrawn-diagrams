@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<!-- 레이아웃 예시: before/after 분할 — 걷어내는 쪽은 crossOut. 렌더: node render.mjs examples/before-after.html -->
+<style>html,body{margin:0;padding:0;}svg{display:block;}</style>
+</head>
+<body>
+<svg id="c" width="1120" height="600" viewBox="0 0 1120 600" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="flag" style="font-family:'Nanum Pen Script';position:absolute;left:-9999px;">loading</div>
+<script>
+const svgns="http://www.w3.org/2000/svg";
+const svg=document.getElementById("c");
+let rc;
+
+const PALETTE={ yellow:"#ffec99", blue:"#d0ebff", green:"#b2f2bb", orange:"#ffd8a8", red:"#ffc9c9" };
+const DARK = new URLSearchParams(location.search).get('mode')==='dark';
+const INK   = DARK ? "#ececec" : "#1e1e1e";
+const STROKE= INK, LABEL = INK;
+const RED   = DARK ? "#ff8787" : "#e03131";
+const BG    = DARK ? "#1b1b1f" : "#fffdf7";
+
+function txt(x,y,s,o={}){
+  const {size=24,color=INK,anchor="middle",rot=0}=o;
+  const t=document.createElementNS(svgns,"text");
+  t.setAttribute("x",x);t.setAttribute("y",y);
+  t.setAttribute("font-family","'Nanum Pen Script', cursive");
+  t.setAttribute("font-size",size);t.setAttribute("fill",color);
+  t.setAttribute("text-anchor",anchor);
+  if(rot)t.setAttribute("transform",`rotate(${rot} ${x} ${y})`);
+  t.textContent=s;svg.appendChild(t);
+}
+function boxLabel(cx,cy,lines,o={}){
+  const {size=23,color=LABEL}=o;const lh=size*0.95;
+  const startY=cy-((lines.length-1)*lh)/2+size*0.30;
+  lines.forEach((ln,i)=>txt(cx,startY+i*lh,ln,{size,color}));
+}
+function box(x,y,w,h,fill,lines,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.7,stroke:o.stroke||STROKE,strokeWidth:2,fill,fillStyle:"hachure",fillWeight:1.35,hachureGap:6}));
+  boxLabel(x+w/2,y+h/2,lines,{size:o.labelSize||23,color:o.labelColor||LABEL});
+}
+function frame(x,y,w,h,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+function aHead(x2,y2,ang,opt){
+  const len=13,sp=0.45;
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI-sp),y2+len*Math.sin(ang+Math.PI-sp),opt));
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI+sp),y2+len*Math.sin(ang+Math.PI+sp),opt));
+}
+function line(x1,y1,x2,y2,o={}){
+  svg.appendChild(rc.line(x1,y1,x2,y2,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+function arrow(x1,y1,x2,y2,o={}){
+  const opt={roughness:1.5,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined};
+  svg.appendChild(rc.line(x1,y1,x2,y2,opt));
+  aHead(x2,y2,Math.atan2(y2-y1,x2-x1),opt);
+}
+function crossOut(x,y,w,h,o={}){
+  const p=o.pad??10, opt={roughness:2.3,stroke:o.stroke||RED,strokeWidth:o.sw||5};
+  svg.appendChild(rc.line(x-p,y-p,x+w+p,y+h+p,opt));
+  svg.appendChild(rc.line(x+w+p,y-p,x-p,y+h+p,opt));
+}
+
+function draw(){
+  rc=rough.svg(svg);
+
+  /* ======================= 여기부터 교체 ======================= */
+  // divider
+  line(560,40,560,540,{stroke:"#b0a89a",sw:1.5,dash:[9,10]});
+
+  /* ---------- LEFT : BEFORE (걷어냄) ---------- */
+  txt(64,52,"BEFORE",{size:34,anchor:"start"});
+  txt(212,52,"— 중앙이 전부 지휘",{size:24,anchor:"start",color:"#888"});
+
+  box(206,92,168,70,PALETTE.yellow,["오케스트레이터","= 중앙 큐"]);
+  box(64,300,168,72,PALETTE.blue,["워커 A"]);
+  box(348,300,168,72,PALETTE.blue,["워커 B"]);
+  arrow(254,162,168,300);  txt(176,236,"[task]",{size:22,rot:-32});
+  arrow(330,162,420,300);  txt(404,236,"[task]",{size:22,rot:32});
+  arrow(206,300,288,166,{dash:[6,7],stroke:"#999",sw:1.6});
+  arrow(388,300,304,168,{dash:[6,7],stroke:"#999",sw:1.6});
+  txt(292,276,"핑퐁",{size:22,color:"#999"});
+
+  crossOut(56,84,470,360,{sw:5});
+  txt(290,500,"걷어냄",{size:44,color:RED,rot:-7});
+  txt(290,540,"주고받을 상태가 없었다",{size:24,color:DARK?"#ffa8a8":"#9b3b3b"});
+
+  /* ---------- RIGHT : AFTER ---------- */
+  txt(600,52,"AFTER",{size:34,anchor:"start"});
+  txt(720,52,"— 핸들러로 분리",{size:24,anchor:"start",color:"#888"});
+
+  box(726,92,212,70,PALETTE.green,["단일 프로세스","1 process · async"],{labelSize:23});
+  txt(992,116,"↺ 동시에",{size:24,color:"#2b8a3e"});
+  box(588,300,150,74,PALETTE.orange,["핸들러 #1"]);
+  box(758,300,150,74,PALETTE.orange,["핸들러 #2"]);
+  box(928,300,150,74,PALETTE.orange,["핸들러 #3"]);
+  arrow(800,162,668,300);  txt(690,236,"독립",{size:20,color:"#777",rot:-30});
+  arrow(835,162,833,300);
+  arrow(872,162,1003,300); txt(978,236,"독립",{size:20,color:"#777",rot:30});
+
+  txt(833,468,"핸들러 = 독립 단위 → 동시에",{size:26});
+  txt(833,506,"공유 상태 없음 · 큐 없음",{size:23,color:"#888"});
+  /* ======================== 교체 끝 ======================== */
+
+  document.getElementById("flag").textContent="DIAGRAM-READY";
+}
+
+window.addEventListener("load",async()=>{
+  try{
+    await document.fonts.load("24px 'Nanum Pen Script'");
+    await document.fonts.load("44px 'Nanum Pen Script'");
+    await document.fonts.ready;
+  }catch(e){}
+  document.body.style.background=BG; svg.style.background=BG;
+  draw();
+});
+</script>
+</body>
+</html>

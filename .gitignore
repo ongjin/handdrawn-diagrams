@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+
+# 렌더 산출물(PNG)은 제외, 단 examples 미리보기는 추적 (소스 *.html 은 전부 추적)
+*.png
+!skills/handdrawn-diagrams/examples/*.png

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<!--
+  손글씨(Excalidraw) 다이어그램 템플릿.  사용법:
+    1) 복사:    cp template.html mydiagram.html
+    2) 캔버스:  아래 <svg> 의 width/height/viewBox 를 다이어그램에 맞게 조정
+    3) 그리기:  draw() 안의 "여기부터 교체" 블록만 다시 그린다 — KIT/PALETTE/폰트대기는 손대지 말 것
+    4) 렌더:    node render.mjs mydiagram.html        (다크: node render.mjs mydiagram.html --dark)
+  헬퍼 API:  box · frame · cylinder(DB) · diamond(분기) · ellipse(노드) · arrow · biArrow · curveArrow · line · txt · xmark · crossOut
+  팔레트:    PALETTE.{yellow,blue,green,orange,red} 를 기본으로 쓰되, 필요하면 어떤 헥스든 직접 넘겨도 됨.
+  다크모드:  --dark (?mode=dark) → 자유 텍스트·화살표·프레임·배경만 다크로 전환(박스 파스텔·라벨은 두 모드 공통). light/dark 2장이 필요할 때만.
+  레이아웃 참고(복붙용):  before/after 분할 = examples/before-after.html,  레이어드 아키텍처 = examples/layered-arch.html
+-->
+<style>
+  html,body{margin:0;padding:0;}
+  svg{display:block;}
+</style>
+</head>
+<body>
+<!-- ============ CONFIG: 캔버스 크기만 여기서 조정 ============ -->
+<svg id="c" width="1120" height="720" viewBox="0 0 1120 720" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="flag" style="font-family:'Nanum Pen Script';position:absolute;left:-9999px;">loading</div>
+<script>
+const svgns="http://www.w3.org/2000/svg";
+const svg=document.getElementById("c");
+let rc;
+
+/* ============ PALETTE (Excalidraw 느낌 — 기본 프리셋. 커스텀 색은 헥스 직접 넘기면 됨) ============ */
+const PALETTE={ yellow:"#ffec99", blue:"#d0ebff", green:"#b2f2bb", orange:"#ffd8a8", red:"#ffc9c9" };
+// 다크모드: ?mode=dark → 잉크(외곽선·라벨·화살표·텍스트)와 배경이 전환. 박스 fill 파스텔은 두 모드 공통.
+// 주의: hachure fill 은 빗금 사이가 배경색이라, 라벨·외곽선도 배경에 맞춰 같이 전환해야 가독성 유지. light 면 모두 #1e1e1e 라 출력 동일.
+const DARK = new URLSearchParams(location.search).get('mode')==='dark';
+const INK   = DARK ? "#ececec" : "#1e1e1e";   // 외곽선·라벨·화살표·텍스트 전부 (모드 따라 전환)
+const STROKE= INK, LABEL = INK;               // (외곽선·라벨 = 잉크)
+const RED   = DARK ? "#ff8787" : "#e03131";
+const BG    = DARK ? "#1b1b1f" : "#fffdf7";
+
+/* ============ KIT: 헬퍼 — 보통 손대지 말 것 ============ */
+function txt(x,y,s,o={}){
+  const {size=24,color=INK,anchor="middle",rot=0}=o;
+  const t=document.createElementNS(svgns,"text");
+  t.setAttribute("x",x);t.setAttribute("y",y);
+  t.setAttribute("font-family","'Nanum Pen Script', cursive");
+  t.setAttribute("font-size",size);t.setAttribute("fill",color);
+  t.setAttribute("text-anchor",anchor);
+  if(rot)t.setAttribute("transform",`rotate(${rot} ${x} ${y})`);
+  t.textContent=s;svg.appendChild(t);
+}
+function boxLabel(cx,cy,lines,o={}){
+  const {size=23,color=LABEL}=o;const lh=size*0.95;
+  const startY=cy-((lines.length-1)*lh)/2+size*0.30;
+  lines.forEach((ln,i)=>txt(cx,startY+i*lh,ln,{size,color}));
+}
+// box(x,y,w,h, fill, ["1줄","2줄",...], {labelSize, labelColor, stroke})
+function box(x,y,w,h,fill,lines,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.7,stroke:o.stroke||STROKE,strokeWidth:2,fill,fillStyle:"hachure",fillWeight:1.35,hachureGap:6}));
+  boxLabel(x+w/2,y+h/2,lines,{size:o.labelSize||23,color:o.labelColor||LABEL});
+}
+// frame(x,y,w,h, {dash:[8,7], stroke, sw}) — 채움 없는 그룹 테두리
+function frame(x,y,w,h,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+// cylinder(x,y,w,h, fill, lines, {labelSize, stroke}) — DB · 스토리지
+function cylinder(x,y,w,h,fill,lines,o={}){
+  const cx=x+w/2, ry=Math.min(h*0.16,20), stroke=o.stroke||STROKE;
+  const fillO={roughness:1.5,stroke:"none",fill,fillStyle:"hachure",fillWeight:1.2,hachureGap:6};
+  svg.appendChild(rc.rectangle(x,y+ry,w,h-2*ry,fillO));                 // 몸통 채움(외곽선 없이)
+  svg.appendChild(rc.ellipse(cx,y+ry,w,2*ry,{...fillO,stroke,strokeWidth:2})); // 윗면
+  svg.appendChild(rc.line(x,y+ry,x,y+h-ry,{roughness:1.3,stroke,strokeWidth:2}));     // 왼면
+  svg.appendChild(rc.line(x+w,y+ry,x+w,y+h-ry,{roughness:1.3,stroke,strokeWidth:2})); // 오른면
+  svg.appendChild(rc.arc(cx,y+h-ry,w,2*ry,0,Math.PI,false,{roughness:1.3,stroke,strokeWidth:2})); // 아랫면
+  boxLabel(cx,y+h*0.56,lines,{size:o.labelSize||21,color:o.labelColor||LABEL});
+}
+// diamond(cx,cy,w,h, fill, lines, {labelSize, stroke}) — 분기 · 판단
+function diamond(cx,cy,w,h,fill,lines,o={}){
+  svg.appendChild(rc.polygon([[cx,cy-h/2],[cx+w/2,cy],[cx,cy+h/2],[cx-w/2,cy]],{roughness:1.6,stroke:o.stroke||STROKE,strokeWidth:2,fill,fillStyle:"hachure",fillWeight:1.3,hachureGap:6}));
+  boxLabel(cx,cy,lines,{size:o.labelSize||21,color:o.labelColor||LABEL});
+}
+// ellipse(cx,cy,w,h, fill, lines?, {labelSize, stroke}) — 노드 · 원
+function ellipse(cx,cy,w,h,fill,lines,o={}){
+  svg.appendChild(rc.ellipse(cx,cy,w,h,{roughness:1.6,stroke:o.stroke||STROKE,strokeWidth:2,fill,fillStyle:"hachure",fillWeight:1.3,hachureGap:6}));
+  if(lines) boxLabel(cx,cy,lines,{size:o.labelSize||21,color:o.labelColor||LABEL});
+}
+function aHead(x2,y2,ang,opt){
+  const len=13,sp=0.45;
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI-sp),y2+len*Math.sin(ang+Math.PI-sp),opt));
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI+sp),y2+len*Math.sin(ang+Math.PI+sp),opt));
+}
+// line(x1,y1,x2,y2, {stroke, sw, dash:[6,7]}) — 화살표 없는 연결선 · 구분선
+function line(x1,y1,x2,y2,o={}){
+  svg.appendChild(rc.line(x1,y1,x2,y2,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+// arrow(x1,y1,x2,y2, {stroke, sw, dash:[6,7]}) — 단방향 화살표
+function arrow(x1,y1,x2,y2,o={}){
+  const opt={roughness:1.5,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined};
+  svg.appendChild(rc.line(x1,y1,x2,y2,opt));
+  aHead(x2,y2,Math.atan2(y2-y1,x2-x1),opt);
+}
+// biArrow(...) — 양방향
+function biArrow(x1,y1,x2,y2,o={}){
+  const opt={roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||3};
+  svg.appendChild(rc.line(x1,y1,x2,y2,opt));
+  aHead(x2,y2,Math.atan2(y2-y1,x2-x1),opt);
+  aHead(x1,y1,Math.atan2(y1-y2,x1-x2),opt);
+}
+// curveArrow([[x,y],[x,y],...], {stroke, sw, dash}) — 여러 점을 지나는 곡선 화살표 (셀프루프·우회 엣지). 마지막 점에 화살촉.
+function curveArrow(pts,o={}){
+  const opt={roughness:1.3,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined};
+  svg.appendChild(rc.curve(pts,opt));
+  const n=pts.length, a=Math.atan2(pts[n-1][1]-pts[n-2][1],pts[n-1][0]-pts[n-2][0]);
+  aHead(pts[n-1][0],pts[n-1][1],a,opt);
+}
+// xmark(cx,cy,r, {stroke, sw}) — 점 하나에 작은 X (연결 차단 표시)
+function xmark(cx,cy,r,o={}){
+  const opt={roughness:1.8,stroke:o.stroke||RED,strokeWidth:o.sw||4};
+  svg.appendChild(rc.line(cx-r,cy-r,cx+r,cy+r,opt));
+  svg.appendChild(rc.line(cx+r,cy-r,cx-r,cy+r,opt));
+}
+// crossOut(x,y,w,h, {stroke, sw, pad}) — 영역 통째로 큰 X (before/after 의 "걷어냄")
+function crossOut(x,y,w,h,o={}){
+  const p=o.pad??10, opt={roughness:2.3,stroke:o.stroke||RED,strokeWidth:o.sw||5};
+  svg.appendChild(rc.line(x-p,y-p,x+w+p,y+h+p,opt));
+  svg.appendChild(rc.line(x+w+p,y-p,x-p,y+h+p,opt));
+}
+
+function draw(){
+  rc=rough.svg(svg);
+
+  /* ======================================================== *
+   *  여기부터 교체 — 아래는 헬퍼 사용 예시 (지우고 다시 그릴 것)  *
+   * ======================================================== */
+  txt(560,52,"제목 — 손글씨 다이어그램 템플릿",{size:30});
+
+  // --- box · frame · arrow ---
+  frame(80,92,960,140,{dash:[8,7],stroke:"#2471a3"});
+  txt(98,86,"frame = 점선 그룹 테두리",{size:17,anchor:"start",color:"#1b4f72"});
+  box(110,122,200,78,PALETTE.yellow,["박스 A","box(x,y,w,h,fill,lines)"]);
+  box(460,122,200,78,PALETTE.blue,["박스 B","여러 줄 = 배열"]);
+  box(810,122,200,78,PALETTE.green,["박스 C"]);
+  arrow(310,161,460,161); txt(385,153,"arrow",{size:16,color:"#666"});
+  biArrow(660,161,810,161); txt(735,153,"biArrow",{size:16,color:"#666"});
+
+  // --- 도형: cylinder · diamond · ellipse ---
+  txt(80,300,"도형:",{size:20,anchor:"start",color:"#555"});
+  cylinder(110,310,150,110,PALETTE.blue,["DB","Postgres"]);
+  diamond(470,365,180,120,PALETTE.yellow,["분기?","decision"]);
+  ellipse(770,365,160,96,PALETTE.green,["노드","ellipse/circle"]);
+  box(960,325,120,80,PALETTE.orange,["강조"]);
+  line(260,365,380,365,{dash:[6,6]});   // 화살표 없는 연결선
+  arrow(560,365,690,365);
+  arrow(850,365,960,365);
+
+  // --- 강조: xmark(점) · crossOut(영역) ---
+  xmark(120,520,13); txt(148,527,"xmark = 점 X (연결 차단)",{size:18,anchor:"start",color:RED});
+  box(560,490,160,66,PALETTE.red,["걷어낼 패널"]); crossOut(560,490,160,66);
+  txt(745,527,"crossOut(x,y,w,h) = 영역 통째 X (before/after)",{size:18,anchor:"start",color:RED});
+  txt(560,628,"기본 팔레트: PALETTE.yellow · blue · green · orange · red — 필요하면 헥스 직접 지정도 OK",{size:20});
+  txt(560,664,"연결: line · arrow · biArrow · curveArrow   도형: box · cylinder · diamond · ellipse   강조: xmark · crossOut",{size:17});
+  /* ======================== 교체 끝 ======================== */
+
+  document.getElementById("flag").textContent="DIAGRAM-READY";
+}
+
+window.addEventListener("load",async()=>{
+  try{
+    // 폰트 로드 대기 — 빠지면 폴백폰트(맨질맨질 sans)로 캡처된다. draw 에서 40px 넘게 쓰면 그 size 도 추가.
+    await document.fonts.load("24px 'Nanum Pen Script'");
+    await document.fonts.load("40px 'Nanum Pen Script'");
+    await document.fonts.ready;
+  }catch(e){}
+  document.body.style.background=BG; svg.style.background=BG;   // 다크모드 배경
+  draw();
+});
+</script>
+</body>
+</html>

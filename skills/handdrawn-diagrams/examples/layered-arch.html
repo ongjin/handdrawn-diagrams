@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<!-- 레이아웃 예시: 레이어드 아키텍처 — frame(레이어) + box(노드) + cylinder(저장소) + arrow. 렌더: node render.mjs examples/layered-arch.html -->
+<style>html,body{margin:0;padding:0;}svg{display:block;}</style>
+</head>
+<body>
+<svg id="c" width="1180" height="660" viewBox="0 0 1180 660" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="flag" style="font-family:'Nanum Pen Script';position:absolute;left:-9999px;">loading</div>
+<script>
+const svgns="http://www.w3.org/2000/svg";
+const svg=document.getElementById("c");
+let rc;
+
+const PALETTE={ yellow:"#ffec99", blue:"#d0ebff", green:"#b2f2bb", orange:"#ffd8a8", red:"#ffc9c9" };
+const DARK = new URLSearchParams(location.search).get('mode')==='dark';
+const INK   = DARK ? "#ececec" : "#1e1e1e";
+const STROKE= INK, LABEL = INK;
+const BG    = DARK ? "#1b1b1f" : "#fffdf7";
+
+function txt(x,y,s,o={}){
+  const {size=24,color=INK,anchor="middle",rot=0}=o;
+  const t=document.createElementNS(svgns,"text");
+  t.setAttribute("x",x);t.setAttribute("y",y);
+  t.setAttribute("font-family","'Nanum Pen Script', cursive");
+  t.setAttribute("font-size",size);t.setAttribute("fill",color);
+  t.setAttribute("text-anchor",anchor);
+  if(rot)t.setAttribute("transform",`rotate(${rot} ${x} ${y})`);
+  t.textContent=s;svg.appendChild(t);
+}
+function boxLabel(cx,cy,lines,o={}){
+  const {size=23,color=LABEL}=o;const lh=size*0.95;
+  const startY=cy-((lines.length-1)*lh)/2+size*0.30;
+  lines.forEach((ln,i)=>txt(cx,startY+i*lh,ln,{size,color}));
+}
+function box(x,y,w,h,fill,lines,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.7,stroke:o.stroke||STROKE,strokeWidth:2,fill,fillStyle:"hachure",fillWeight:1.35,hachureGap:6}));
+  boxLabel(x+w/2,y+h/2,lines,{size:o.labelSize||23,color:o.labelColor||LABEL});
+}
+function frame(x,y,w,h,o={}){
+  svg.appendChild(rc.rectangle(x,y,w,h,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+function cylinder(x,y,w,h,fill,lines,o={}){
+  const cx=x+w/2, ry=Math.min(h*0.16,20), stroke=o.stroke||STROKE;
+  const fillO={roughness:1.5,stroke:"none",fill,fillStyle:"hachure",fillWeight:1.2,hachureGap:6};
+  svg.appendChild(rc.rectangle(x,y+ry,w,h-2*ry,fillO));
+  svg.appendChild(rc.ellipse(cx,y+ry,w,2*ry,{...fillO,stroke,strokeWidth:2}));
+  svg.appendChild(rc.line(x,y+ry,x,y+h-ry,{roughness:1.3,stroke,strokeWidth:2}));
+  svg.appendChild(rc.line(x+w,y+ry,x+w,y+h-ry,{roughness:1.3,stroke,strokeWidth:2}));
+  svg.appendChild(rc.arc(cx,y+h-ry,w,2*ry,0,Math.PI,false,{roughness:1.3,stroke,strokeWidth:2}));
+  boxLabel(cx,y+h*0.56,lines,{size:o.labelSize||21,color:o.labelColor||LABEL});
+}
+function aHead(x2,y2,ang,opt){
+  const len=13,sp=0.45;
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI-sp),y2+len*Math.sin(ang+Math.PI-sp),opt));
+  svg.appendChild(rc.line(x2,y2,x2+len*Math.cos(ang+Math.PI+sp),y2+len*Math.sin(ang+Math.PI+sp),opt));
+}
+function line(x1,y1,x2,y2,o={}){
+  svg.appendChild(rc.line(x1,y1,x2,y2,{roughness:1.4,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined}));
+}
+function arrow(x1,y1,x2,y2,o={}){
+  const opt={roughness:1.5,stroke:o.stroke||INK,strokeWidth:o.sw||2,strokeLineDash:o.dash||undefined};
+  svg.appendChild(rc.line(x1,y1,x2,y2,opt));
+  aHead(x2,y2,Math.atan2(y2-y1,x2-x1),opt);
+}
+
+function draw(){
+  rc=rough.svg(svg);
+
+  /* ======================= 여기부터 교체 ======================= */
+  txt(56,46,"웹앱 아키텍처 — 레이어드 예시",{size:30,anchor:"start"});
+  txt(56,74,"client → edge → app → data   ·   외부는 outbound only",{size:19,anchor:"start",color:"#888"});
+
+  // --- 좌측 레이어: client → edge ---
+  box(56,150,180,82,PALETTE.orange,["클라이언트","브라우저 · 모바일"],{labelSize:21});
+  box(56,300,180,72,PALETTE.yellow,["CDN · Edge","정적 · 캐싱"],{labelSize:21});
+  arrow(146,232,146,300);
+  arrow(236,336,322,212);  txt(250,288,"요청",{size:18,color:"#888",anchor:"start"});
+
+  // --- 앱 서버 레이어 ---
+  frame(300,110,520,300,{});
+  txt(318,134,"앱 서버 (컨테이너)",{size:21,anchor:"start",color:"#1b4f72"});
+  box(320,150,480,100,PALETTE.blue,["API 서버","라우트 핸들러 · stateless"],{labelSize:21});
+  box(320,285,480,100,PALETTE.blue,["백그라운드 워커","큐 소비 · 크론 · 재계산"],{labelSize:21});
+  arrow(560,250,560,285);  txt(572,272,"큐",{size:18,color:"#888",anchor:"start"});
+
+  // --- 데이터 레이어 ---
+  frame(300,440,520,160,{dash:[8,7],stroke:"#2b8a3e"});
+  txt(318,464,"데이터",{size:20,anchor:"start",color:"#145a32"});
+  cylinder(330,470,210,112,PALETTE.green,["Postgres","+ pgvector"]);
+  cylinder(590,470,200,112,PALETTE.green,["Redis","cache-only"]);
+  arrow(450,385,450,470);  txt(462,430,"읽기/쓰기",{size:17,color:"#888",anchor:"start"});
+  arrow(690,385,690,470);
+
+  // --- 외부 (outbound only) ---
+  frame(880,140,270,420,{stroke:"#c0392b"});
+  txt(898,165,"외부 — outbound only",{size:20,anchor:"start",color:"#7b241c"});
+  box(900,185,230,104,PALETTE.red,["LLM API","chat · embedding"],{labelSize:20});
+  box(900,320,230,96,PALETTE.red,["3rd-party","메일 · 이미지 CDN"],{labelSize:20});
+  arrow(800,200,900,224,{stroke:"#c0392b"});  txt(812,196,"LLM 호출",{size:18,color:"#7b241c",anchor:"start"});
+  arrow(800,330,900,360,{stroke:"#c0392b"});  txt(812,330,"발송 · 업로드",{size:18,color:"#7b241c",anchor:"start"});
+
+  txt(430,636,"레이어 = frame · 노드 = box · 저장소 = cylinder · 호출 = arrow",{size:20,color:"#888"});
+  /* ======================== 교체 끝 ======================== */
+
+  document.getElementById("flag").textContent="DIAGRAM-READY";
+}
+
+window.addEventListener("load",async()=>{
+  try{
+    await document.fonts.load("21px 'Nanum Pen Script'");
+    await document.fonts.load("30px 'Nanum Pen Script'");
+    await document.fonts.ready;
+  }catch(e){}
+  document.body.style.background=BG; svg.style.background=BG;
+  draw();
+});
+</script>
+</body>
+</html>

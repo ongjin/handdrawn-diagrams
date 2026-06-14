@@ -1,0 +1,12 @@
+{
+  "name": "handdrawn-diagrams",
+  "description": "Create hand-drawn / Excalidraw-style diagrams (rough.js + handwriting fonts) rendered to PNG via a headless browser. Bundles the handdrawn-diagrams skill.",
+  "version": "0.1.0",
+  "author": {
+    "name": "ongjin"
+  },
+  "homepage": "https://github.com/ongjin/handdrawn-diagrams",
+  "repository": "https://github.com/ongjin/handdrawn-diagrams",
+  "license": "MIT",
+  "keywords": ["skills", "diagrams", "excalidraw", "rough.js", "documentation"]
+}
