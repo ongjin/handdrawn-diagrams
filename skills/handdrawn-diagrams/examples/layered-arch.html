@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
-<!-- 레이아웃 예시: 레이어드 아키텍처 — frame(레이어) + box(노드) + cylinder(저장소) + arrow. 렌더: node render.mjs examples/layered-arch.html -->
+<!-- Layout example: layered architecture — frame(layer) + box(node) + cylinder(store) + arrow. Render: node render.mjs examples/layered-arch.html -->
 <style>html,body{margin:0;padding:0;}svg{display:block;}</style>
 </head>
 <body>
@@ -73,41 +73,41 @@ function arrow(x1,y1,x2,y2,o={}){
 function draw(){
   rc=rough.svg(svg);
 
-  /* ======================= 여기부터 교체 ======================= */
-  txt(56,46,"웹앱 아키텍처 — 레이어드 예시",{size:30,anchor:"start"});
-  txt(56,74,"client → edge → app → data   ·   외부는 outbound only",{size:19,anchor:"start",color:"#888"});
+  /* ======================= replace below ======================= */
+  txt(56,46,"Web app architecture — layered example",{size:30,anchor:"start"});
+  txt(56,74,"client → edge → app → data   ·   external is outbound only",{size:19,anchor:"start",color:"#888"});
 
-  // --- 좌측 레이어: client → edge ---
-  box(56,150,180,82,PALETTE.orange,["클라이언트","브라우저 · 모바일"],{labelSize:21});
-  box(56,300,180,72,PALETTE.yellow,["CDN · Edge","정적 · 캐싱"],{labelSize:21});
+  // --- left layer: client → edge ---
+  box(56,150,180,82,PALETTE.orange,["Client","browser · mobile"],{labelSize:21});
+  box(56,300,180,72,PALETTE.yellow,["CDN · Edge","static · caching"],{labelSize:21});
   arrow(146,232,146,300);
-  arrow(236,336,322,212);  txt(250,288,"요청",{size:18,color:"#888",anchor:"start"});
+  arrow(236,336,322,212);  txt(250,288,"request",{size:18,color:"#888",anchor:"start"});
 
-  // --- 앱 서버 레이어 ---
+  // --- app server layer ---
   frame(300,110,520,300,{});
-  txt(318,134,"앱 서버 (컨테이너)",{size:21,anchor:"start",color:"#1b4f72"});
-  box(320,150,480,100,PALETTE.blue,["API 서버","라우트 핸들러 · stateless"],{labelSize:21});
-  box(320,285,480,100,PALETTE.blue,["백그라운드 워커","큐 소비 · 크론 · 재계산"],{labelSize:21});
-  arrow(560,250,560,285);  txt(572,272,"큐",{size:18,color:"#888",anchor:"start"});
+  txt(318,134,"App server (container)",{size:21,anchor:"start",color:"#1b4f72"});
+  box(320,150,480,100,PALETTE.blue,["API server","route handlers · stateless"],{labelSize:21});
+  box(320,285,480,100,PALETTE.blue,["Background worker","queue · cron · recompute"],{labelSize:21});
+  arrow(560,250,560,285);  txt(572,272,"queue",{size:18,color:"#888",anchor:"start"});
 
-  // --- 데이터 레이어 ---
+  // --- data layer ---
   frame(300,440,520,160,{dash:[8,7],stroke:"#2b8a3e"});
-  txt(318,464,"데이터",{size:20,anchor:"start",color:"#145a32"});
+  txt(318,464,"Data",{size:20,anchor:"start",color:"#145a32"});
   cylinder(330,470,210,112,PALETTE.green,["Postgres","+ pgvector"]);
   cylinder(590,470,200,112,PALETTE.green,["Redis","cache-only"]);
-  arrow(450,385,450,470);  txt(462,430,"읽기/쓰기",{size:17,color:"#888",anchor:"start"});
+  arrow(450,385,450,470);  txt(462,430,"read/write",{size:17,color:"#888",anchor:"start"});
   arrow(690,385,690,470);
 
-  // --- 외부 (outbound only) ---
+  // --- external (outbound only) ---
   frame(880,140,270,420,{stroke:"#c0392b"});
-  txt(898,165,"외부 — outbound only",{size:20,anchor:"start",color:"#7b241c"});
+  txt(898,165,"External — outbound only",{size:20,anchor:"start",color:"#7b241c"});
   box(900,185,230,104,PALETTE.red,["LLM API","chat · embedding"],{labelSize:20});
-  box(900,320,230,96,PALETTE.red,["3rd-party","메일 · 이미지 CDN"],{labelSize:20});
-  arrow(800,200,900,224,{stroke:"#c0392b"});  txt(812,196,"LLM 호출",{size:18,color:"#7b241c",anchor:"start"});
-  arrow(800,330,900,360,{stroke:"#c0392b"});  txt(812,330,"발송 · 업로드",{size:18,color:"#7b241c",anchor:"start"});
+  box(900,320,230,96,PALETTE.red,["3rd-party","mail · image CDN"],{labelSize:20});
+  arrow(800,200,900,224,{stroke:"#c0392b"});  txt(812,196,"LLM call",{size:18,color:"#7b241c",anchor:"start"});
+  arrow(800,330,900,360,{stroke:"#c0392b"});  txt(812,330,"send · upload",{size:18,color:"#7b241c",anchor:"start"});
 
-  txt(430,636,"레이어 = frame · 노드 = box · 저장소 = cylinder · 호출 = arrow",{size:20,color:"#888"});
-  /* ======================== 교체 끝 ======================== */
+  txt(430,636,"layer = frame · node = box · store = cylinder · call = arrow",{size:20,color:"#888"});
+  /* ======================== end replace ======================== */
 
   document.getElementById("flag").textContent="DIAGRAM-READY";
 }

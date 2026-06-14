@@ -1,37 +1,37 @@
 #!/usr/bin/env node
 /*
- * 손글씨 다이어그램 HTML → PNG (MCP·로컬서버 불필요 — file:// 직접 로드).
+ * Handdrawn diagram HTML → PNG (no MCP / local server — loads file:// directly).
  *
- * 사용:
+ * Usage:
  *   node render.mjs diagram.html                 # → diagram.png
  *   node render.mjs diagram.html --dark          # → diagram-dark.png  (?mode=dark)
- *   node render.mjs diagram.html -o out.png      # 출력 경로 지정
- *   node render.mjs diagram.html --scale 1       # 픽셀 배율 (기본 2 = 레티나)
+ *   node render.mjs diagram.html -o out.png      # set output path
+ *   node render.mjs diagram.html --scale 1       # pixel scale (default 2 = retina)
  *
- * 준비 (한 번):  npm i -D playwright && npx playwright install chromium
+ * Setup (once):  npm i -D playwright && npx playwright install chromium
  *
- * 동작: chromium(headless) 로 파일을 열고 → 템플릿이 그리기를 마치며 세팅하는
- *       #flag === "DIAGRAM-READY" 와 폰트 로드를 기다린 뒤 → #c SVG 만 잘라 PNG 저장.
+ * How it works: open the file in headless chromium → wait for #flag === "DIAGRAM-READY"
+ *       (the template sets it when drawing finishes) and for fonts → crop the #c SVG only and save the PNG.
  */
 import { pathToFileURL } from "node:url";
 import { resolve, dirname, basename, join } from "node:path";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 
-// 이 스크립트는 보통 ~/.claude/skills/ 에 있고 다른 프로젝트에서 호출된다.
-// 그래서 스크립트 위치(전역 설치)뿐 아니라 실행한 프로젝트(cwd)의 node_modules 에서도 playwright 를 찾는다.
+// This script usually lives in ~/.claude/skills/ and is called from another project.
+// So it resolves playwright both at the script location (global install) and in the running project's node_modules (cwd).
 async function loadChromium() {
   try { return (await import("playwright")).chromium; } catch {}
   try {
     const req = createRequire(join(process.cwd(), "package.json"));
     const m = await import(pathToFileURL(req.resolve("playwright")).href);
-    return m.chromium ?? m.default?.chromium;   // CJS entry → named export 는 default 안에
+    return m.chromium ?? m.default?.chromium;   // CJS entry → the named export lives under default
   } catch {}
   return null;
 }
 const chromium = await loadChromium();
 if (!chromium) {
-  console.error("playwright 가 없습니다.  프로젝트에서:  npm i -D playwright && npx playwright install chromium");
+  console.error("playwright not found.  In the project:  npm i -D playwright && npx playwright install chromium");
   process.exit(1);
 }
 
@@ -52,7 +52,7 @@ if (!inArg) {
 }
 const inPath = resolve(inArg);
 if (!existsSync(inPath)) {
-  console.error(`파일 없음: ${inPath}`);
+  console.error(`file not found: ${inPath}`);
   process.exit(1);
 }
 
@@ -75,7 +75,7 @@ try {
   await page.locator("#c").screenshot({ path: outPath });
   console.log(`✓ ${outPath}`);
 } catch (e) {
-  console.error("렌더 실패:", e.message);
+  console.error("render failed:", e.message);
   process.exitCode = 1;
 } finally {
   await browser.close();

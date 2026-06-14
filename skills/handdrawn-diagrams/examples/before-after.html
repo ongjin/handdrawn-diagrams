@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
-<!-- 레이아웃 예시: before/after 분할 — 걷어내는 쪽은 crossOut. 렌더: node render.mjs examples/before-after.html -->
+<!-- Layout example: before/after split — crossOut the side being removed. Render: node render.mjs examples/before-after.html -->
 <style>html,body{margin:0;padding:0;}svg{display:block;}</style>
 </head>
 <body>
@@ -68,43 +68,43 @@ function crossOut(x,y,w,h,o={}){
 function draw(){
   rc=rough.svg(svg);
 
-  /* ======================= 여기부터 교체 ======================= */
+  /* ======================= replace below ======================= */
   // divider
   line(560,40,560,540,{stroke:"#b0a89a",sw:1.5,dash:[9,10]});
 
-  /* ---------- LEFT : BEFORE (걷어냄) ---------- */
+  /* ---------- LEFT : BEFORE (removed) ---------- */
   txt(64,52,"BEFORE",{size:34,anchor:"start"});
-  txt(212,52,"— 중앙이 전부 지휘",{size:24,anchor:"start",color:"#888"});
+  txt(212,52,"— a central queue runs all",{size:24,anchor:"start",color:"#888"});
 
-  box(206,92,168,70,PALETTE.yellow,["오케스트레이터","= 중앙 큐"]);
-  box(64,300,168,72,PALETTE.blue,["워커 A"]);
-  box(348,300,168,72,PALETTE.blue,["워커 B"]);
+  box(206,92,168,70,PALETTE.yellow,["Orchestrator","= central queue"]);
+  box(64,300,168,72,PALETTE.blue,["Worker A"]);
+  box(348,300,168,72,PALETTE.blue,["Worker B"]);
   arrow(254,162,168,300);  txt(176,236,"[task]",{size:22,rot:-32});
   arrow(330,162,420,300);  txt(404,236,"[task]",{size:22,rot:32});
   arrow(206,300,288,166,{dash:[6,7],stroke:"#999",sw:1.6});
   arrow(388,300,304,168,{dash:[6,7],stroke:"#999",sw:1.6});
-  txt(292,276,"핑퐁",{size:22,color:"#999"});
+  txt(292,276,"ping-pong",{size:22,color:"#999"});
 
   crossOut(56,84,470,360,{sw:5});
-  txt(290,500,"걷어냄",{size:44,color:RED,rot:-7});
-  txt(290,540,"주고받을 상태가 없었다",{size:24,color:DARK?"#ffa8a8":"#9b3b3b"});
+  txt(290,500,"removed",{size:44,color:RED,rot:-7});
+  txt(290,540,"no shared state to pass",{size:24,color:DARK?"#ffa8a8":"#9b3b3b"});
 
   /* ---------- RIGHT : AFTER ---------- */
   txt(600,52,"AFTER",{size:34,anchor:"start"});
-  txt(720,52,"— 핸들러로 분리",{size:24,anchor:"start",color:"#888"});
+  txt(720,52,"— split into handlers",{size:24,anchor:"start",color:"#888"});
 
-  box(726,92,212,70,PALETTE.green,["단일 프로세스","1 process · async"],{labelSize:23});
-  txt(992,116,"↺ 동시에",{size:24,color:"#2b8a3e"});
-  box(588,300,150,74,PALETTE.orange,["핸들러 #1"]);
-  box(758,300,150,74,PALETTE.orange,["핸들러 #2"]);
-  box(928,300,150,74,PALETTE.orange,["핸들러 #3"]);
-  arrow(800,162,668,300);  txt(690,236,"독립",{size:20,color:"#777",rot:-30});
+  box(726,92,212,70,PALETTE.green,["Single process","1 process · async"],{labelSize:23});
+  txt(992,116,"↺ at once",{size:24,color:"#2b8a3e"});
+  box(588,300,150,74,PALETTE.orange,["Handler #1"]);
+  box(758,300,150,74,PALETTE.orange,["Handler #2"]);
+  box(928,300,150,74,PALETTE.orange,["Handler #3"]);
+  arrow(800,162,668,300);  txt(690,236,"independent",{size:20,color:"#777",rot:-30});
   arrow(835,162,833,300);
-  arrow(872,162,1003,300); txt(978,236,"독립",{size:20,color:"#777",rot:30});
+  arrow(872,162,1003,300); txt(978,236,"independent",{size:20,color:"#777",rot:30});
 
-  txt(833,468,"핸들러 = 독립 단위 → 동시에",{size:26});
-  txt(833,506,"공유 상태 없음 · 큐 없음",{size:23,color:"#888"});
-  /* ======================== 교체 끝 ======================== */
+  txt(833,468,"handlers = independent → concurrent",{size:26});
+  txt(833,506,"no shared state · no queue",{size:23,color:"#888"});
+  /* ======================== end replace ======================== */
 
   document.getElementById("flag").textContent="DIAGRAM-READY";
 }
