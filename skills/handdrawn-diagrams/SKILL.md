@@ -23,7 +23,7 @@ Make hand-drawn (Excalidraw-style) diagrams without any external app: **one HTML
 
 1. **Copy** — copy the template into the project you're working in: `cp ~/.claude/skills/handdrawn-diagrams/template.html docs/images/mydiagram.html` (path is up to you).
 2. **Draw** — set the top `<svg>` width/height/viewBox to your drawing's size (~40px margin, title around `y≈52` — see the example coords), then draw inside `draw()`, **only in the `replace below` block**, using coordinates. Don't touch KIT / PALETTE — leave the font-wait block alone too, but **if you use text larger than 40px, add a single `fonts.load(...)` line for that size** (see Common mistakes).
-3. **Render** — `node ~/.claude/skills/handdrawn-diagrams/render.mjs docs/images/mydiagram.html` → `mydiagram.png` next to it. If you also need a dark version, append `--dark` → `mydiagram-dark.png`.
+3. **Render** — `node ~/.claude/skills/handdrawn-diagrams/render.mjs docs/images/mydiagram.html` → `mydiagram.png` next to it. If you also need a dark version, append `--dark` → `mydiagram-dark.png`. The PNG is rasterized at **3× by default** (sharp on retina / when zoomed); pass `--scale 4` for print or very large zoom — it's a raster, so beyond its factor it pixelates (the SVG source stays infinitely re-editable).
 4. **Check** — open the PNG and confirm it came out in the **handwriting font**. A flat sans means the font wait failed → redo.
 
 Setup (once per project): `npm i -D playwright && npx playwright install chromium`.

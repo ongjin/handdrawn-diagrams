@@ -6,7 +6,7 @@
  *   node render.mjs diagram.html                 # → diagram.png
  *   node render.mjs diagram.html --dark          # → diagram-dark.png  (?mode=dark)
  *   node render.mjs diagram.html -o out.png      # set output path
- *   node render.mjs diagram.html --scale 1       # pixel scale (default 2 = retina)
+ *   node render.mjs diagram.html --scale 4       # pixel scale (default 3; raise for print / large zoom)
  *
  * Setup (once):  npm i -D playwright && npx playwright install chromium
  *
@@ -40,7 +40,7 @@ const dark = argv.includes("--dark");
 const oi = argv.indexOf("-o");
 const outArg = oi >= 0 ? argv[oi + 1] : null;
 const si = argv.indexOf("--scale");
-const scale = si >= 0 ? Number(argv[si + 1]) : 2;
+const scale = si >= 0 ? Number(argv[si + 1]) : 3;
 const taken = new Set();
 if (oi >= 0) { taken.add(oi); taken.add(oi + 1); }
 if (si >= 0) { taken.add(si); taken.add(si + 1); }
